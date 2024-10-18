@@ -528,6 +528,7 @@ static PyObject* _CtxWriteImage_encode(CtxWriteImageObject* self, PyObject* args
         save_nclx, color_primaries, transfer_characteristics, matrix_coefficients, full_range_flag;
     struct heif_error error;
     struct heif_encoding_options* options;
+    struct heif_color_profile_nclx* output_nclx_profile = NULL;
 
     if (!PyArg_ParseTuple(args, "Oiiiiiii",
         (PyObject*)&ctx_write, &primary,
@@ -545,20 +546,21 @@ static PyObject* _CtxWriteImage_encode(CtxWriteImageObject* self, PyObject* args
         (matrix_coefficients != -1) ||
         (full_range_flag != -1)
        ) {
-        options->output_nclx_profile = heif_nclx_color_profile_alloc();
+        output_nclx_profile = heif_nclx_color_profile_alloc();
         if (color_primaries != -1)
-            options->output_nclx_profile->color_primaries = color_primaries;
+            output_nclx_profile->color_primaries = color_primaries;
         if (transfer_characteristics != -1)
-            options->output_nclx_profile->transfer_characteristics = transfer_characteristics;
+            output_nclx_profile->transfer_characteristics = transfer_characteristics;
         if (matrix_coefficients != -1)
-            options->output_nclx_profile->matrix_coefficients = matrix_coefficients;
+            output_nclx_profile->matrix_coefficients = matrix_coefficients;
         if (full_range_flag != -1)
-            options->output_nclx_profile->full_range_flag = full_range_flag;
+            output_nclx_profile->full_range_flag = full_range_flag;
+        options->output_nclx_profile = output_nclx_profile;
     }
     options->image_orientation = image_orientation;
     error = heif_context_encode_image(ctx_write->ctx, self->image, ctx_write->encoder, options, &self->handle);
-    if (options->output_nclx_profile)
-        heif_nclx_color_profile_free(options->output_nclx_profile);
+    if (output_nclx_profile)
+        heif_nclx_color_profile_free(output_nclx_profile);
     heif_encoding_options_free(options);
     Py_END_ALLOW_THREADS
     if (check_error(error))
